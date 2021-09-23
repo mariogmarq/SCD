@@ -21,6 +21,8 @@ using namespace std::chrono;
 
 const long m  = 1024l*1024l*1024l, // número de muestras (del orden de mil millones)
            n  = 8  ;               // número de hebras concurrentes (divisor de 'm')
+const long batch = m/n;
+const  double step = 1.0/m;
 
 
 // -----------------------------------------------------------------------------
@@ -45,16 +47,14 @@ double calcular_integral_secuencial(  )
 // función que ejecuta cada hebra: recibe $i$ ==índice de la hebra, ($0\leq i<n$)
 double funcion_hebra( long i )
 {
-  long batch = m/n;
   long next_batch = (i+1)*batch;
-  double step = 1.0/m;
 
   double suma = 0.0;
-  for(long j = i*batch; j <  next_batch; ++j){
+  for(long j = i*batch; j < next_batch; ++j){
     double xj = double(j+0.5)*step;
     suma += f(xj);
   }
-
+  cout << suma << endl;
   return suma;
 }
 
@@ -72,7 +72,7 @@ double calcular_integral_concurrente( )
     resultado += hebras[i].get();
   }
 
-  return resultado;
+  return resultado/m;
 }
 // -----------------------------------------------------------------------------
 
