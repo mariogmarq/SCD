@@ -3,6 +3,7 @@
 #include <thread>
 #include <mutex>
 #include <random>
+#include <atomic>
 #include "scd.h"
 
 using namespace std ;
@@ -18,6 +19,12 @@ unsigned
    cont_prod[num_items] = {0}, // contadores de verificación: para cada dato, número de veces que se ha producido.
    cont_cons[num_items] = {0}, // contadores de verificación: para cada dato, número de veces que se ha consumido.
    siguiente_dato       = 0 ;  // siguiente dato a producir en 'producir_dato' (solo se usa ahí)
+
+int vec[tam_vec];
+int primera_libre = 0;
+mutex m;
+Semaphore leerDeVec(0), escribirEnVec(tam_vec);
+
 
 //**********************************************************************
 // funciones comunes a las dos soluciones (fifo y lifo)
@@ -67,12 +74,19 @@ void test_contadores()
 
 //----------------------------------------------------------------------
 
+
 void  funcion_hebra_productora(  )
 {
    for( unsigned i = 0 ; i < num_items ; i++ )
    {
       int dato = producir_dato() ;
       // completar ........
+      escribirEnVec.sem_wait();
+      m.lock();
+      vec[primera_libre++] = dato;        
+        m.unlock();
+      leerDeVec.sem_signal();
+          
    }
 }
 
@@ -84,7 +98,13 @@ void funcion_hebra_consumidora(  )
    {
       int dato ;
       // completar ......
+       leerDeVec.sem_wait();
+       m.lock();
+       dato = vec[--primera_libre];
       consumir_dato( dato ) ;
+      m.unlock();
+      escribirEnVec.sem_signal();
+        
     }
 }
 //----------------------------------------------------------------------
