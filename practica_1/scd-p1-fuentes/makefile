@@ -25,7 +25,7 @@ t: test-semaforos_exe
 	./$< | more
 
 ## regla para compilar (.cpp --> _exe)
-%_exe: %.cpp Semaphore.cpp Semaphore.h
+%_exe: %.cpp scd.cpp scd.h
 		$(compilador) -std=c++11 -pthread -o $@ $< scd.cpp
 
 clean:
