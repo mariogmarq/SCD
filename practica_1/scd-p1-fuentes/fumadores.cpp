@@ -5,6 +5,7 @@
 #include <random> // dispositivos, generadores y distribuciones aleatorias
 #include <chrono> // duraciones (duration), unidades de tiempo
 #include "scd.h"
+#include <vector>
 
 using namespace std ;
 using namespace scd ;
@@ -12,6 +13,10 @@ using namespace scd ;
 // numero de fumadores 
 
 const int num_fumadores = 3 ;
+
+// Semaforos
+ vector<Semaphore> ingredientes; 
+Semaphore mostrador_vacio(1);
 
 //-------------------------------------------------------------------------
 // Función que simula la acción de producir un ingrediente, como un retardo
@@ -41,7 +46,12 @@ int producir_ingrediente()
 
 void funcion_hebra_estanquero(  )
 {
-
+  while(true) {
+    auto producido = producir_ingrediente();
+    sem_wait(mostrador_vacio);
+    cout << "Estanquero coloca ingrediente: " << producido << endl;
+    sem_signal(ingredientes[producido]);
+  }
 }
 
 //-------------------------------------------------------------------------
@@ -73,7 +83,10 @@ void  funcion_hebra_fumador( int num_fumador )
 {
    while( true )
    {
-
+      sem_wait(ingredientes[num_fumador]);
+      cout << "Fumador " << num_fumador << " retira ingrediente" << endl;
+      sem_signal(mostrador_vacio);
+      fumar(num_fumador);
    }
 }
 
@@ -82,5 +95,24 @@ void  funcion_hebra_fumador( int num_fumador )
 int main()
 {
    // declarar hebras y ponerlas en marcha
-   // ......
+  thread fumadores[num_fumadores];
+  thread estanquero;
+
+  // inicializamos el vector de ingredientes
+  for(int i = 0; i < num_fumadores; i++)
+    ingredientes.push_back(Semaphore(0));
+
+  // Lanzamos fumadores
+  for(int i = 0; i < num_fumadores; i++)
+    fumadores[i] = thread(funcion_hebra_fumador, i);
+
+  // Lanzamos estanquero
+  estanquero = thread(funcion_hebra_estanquero);
+
+  // hacemos join
+  estanquero.join();
+  for(int i = 0; i < num_fumadores; i++)
+    fumadores[i].join();
+
+  return 0;
 }
