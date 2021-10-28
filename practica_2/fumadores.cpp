@@ -13,7 +13,7 @@ const u_int numero_fumadores = 3;
 class Estanco: public HoareMonitor {
     private:
         const int sin_ingrediente = -1;
-        CondVar cola_fumar;
+        CondVar cola_fumar[numero_fumadores];
         CondVar cola_estanquero;
         int ingrediente;
 
@@ -22,47 +22,44 @@ class Estanco: public HoareMonitor {
         void obtenerIngrediente(int i);
         void ponerIngrediente(int i);
         void esperarRecogidaIngrediente();
-        void avisarEstanquero();
 };
 
 Estanco::Estanco() {
-    cola_fumar = newCondVar();
     cola_estanquero = newCondVar();
     ingrediente = sin_ingrediente;
+    for(int i = 0; i < numero_fumadores; i++) {
+        cola_fumar[i] = newCondVar();
+    }
 }
 
 void Estanco::ponerIngrediente(int i) {
     ingrediente = i;
-    cout << "Estanquero: pone ingrediente " << i << "\n";
+    std::cout << "Estanquero: pone ingrediente " << i << "\n";
+    cola_fumar[i].signal();
 }
 
 void Estanco::esperarRecogidaIngrediente() {
-    cout << "Estanquero: espera recogida ingrediente\n";
-    // Despierta a todos los fumadores para que comprueben que ingrediente es
-    for(int i = 0; i < numero_fumadores; i++)
-        cola_fumar.signal();
+    std::cout << "Estanquero: espera recogida ingrediente\n";
     // En cuanto haga signal al ser SU el estanquero se bloquea automaticamente en el monitor
-    cola_estanquero.wait();
+    if(ingrediente != sin_ingrediente)
+        cola_estanquero.wait();
 }
 
 void Estanco::obtenerIngrediente(int i) {
-    while(ingrediente != i) {
-        cola_fumar.wait();
+    if(ingrediente != i) {
+        cola_fumar[i].wait();
     }
 
-    cout << "Fumador " << i << ": Coge ingrediente\n";
+    std::cout << "Fumador " << i << ": Coge ingrediente\n";
     // Lo han llamado y ha encontrado su ingrediente
     // Cambiamos el ingrediente por uno vacio para que no haya condicion de carrera
     ingrediente = sin_ingrediente;
-}
-
-void Estanco::avisarEstanquero() {
     cola_estanquero.signal();
 }
 
 int ProducirIngrediente() {
     int sleep = aleatorio<50, 100>();
-    cout << "Estanquero: Produciendo ingrediente con sleep de " << sleep << "ms\n";
+    std::cout << "Estanquero: Produciendo ingrediente con sleep de " << sleep << "ms\n";
     this_thread::sleep_for(chrono::milliseconds(sleep));
     int ingrediente = aleatorio<0, numero_fumadores-1>();
     return ingrediente;
@@ -70,9 +67,9 @@ int ProducirIngrediente() {
 
 void fumar(int i) {
     int sleep = aleatorio<200, 300>();
-    cout << "Fumador " << i << ": Empieza a fumar con sleep de " << sleep << "ms\n";
+    std::cout << "Fumador " << i << ": Empieza a fumar con sleep de " << sleep << "ms\n";
     this_thread::sleep_for(chrono::milliseconds(sleep));
-    cout << "Fumador " << i << ": Termina de fumar\n";
+    std::cout << "Fumador " << i << ": Termina de fumar\n";
 }
 
 void funcion_hebra_estanquero(MRef<Estanco> monitor) {
@@ -86,7 +83,6 @@ void funcion_hebra_estanquero(MRef<Estanco> monitor) {
 void funcion_hebra_fumador(MRef<Estanco> monitor, int i) {
     while(true) {
         monitor->obtenerIngrediente(i);
-        monitor->avisarEstanquero();
         fumar(i);
     }
 }
