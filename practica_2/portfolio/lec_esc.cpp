@@ -69,7 +69,7 @@ void leer(int i) {
 }
 
 void esperar_lector(int i) {
-    int sleep = aleatorio<200, 300>();
+    int sleep = aleatorio<50, 100>();
 	salida.lock();
     std::cout << "Lector " << i << ": descanso con sleep de " << sleep << "ms\n";
 	salida.unlock();
@@ -87,7 +87,7 @@ void esperar_escritor(int i) {
 void escribir(int i){
     int sleep = aleatorio<50, 100>();
 	salida.lock();
-    std::cout << "Escritor " << i << ": leyendo con sleep de " << sleep << "ms\n";
+    std::cout << "Escritor " << i << ": escribiendo con sleep de " << sleep << "ms\n";
 	salida.unlock();
     this_thread::sleep_for(chrono::milliseconds(sleep));
 }
