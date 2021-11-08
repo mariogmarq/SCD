@@ -117,7 +117,7 @@ void funcion_hebra_impresora(  )
 int main()
 {
    cout << "-----------------------------------------------------------------" << endl
-        << "Problema de los productores-consumidores (solución LIFO o FIFO ?)." << endl
+        << "Problema de los productores-consumidores (solución impresora)." << endl
         << "------------------------------------------------------------------" << endl
         << flush ;
 

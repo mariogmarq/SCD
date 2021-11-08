@@ -106,7 +106,7 @@ void funcion_hebra_consumidora(  )
 int main()
 {
    cout << "-----------------------------------------------------------------" << endl
-        << "Problema de los productores-consumidores (solución LIFO o FIFO ?)." << endl
+        << "Problema de los productores-consumidores (solución FIFO)." << endl
         << "------------------------------------------------------------------" << endl
         << flush ;
 

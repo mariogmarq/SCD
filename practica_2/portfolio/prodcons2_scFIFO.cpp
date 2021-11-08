@@ -5,15 +5,6 @@
 //
 // Sistemas concurrentes y Distribuidos.
 // Seminario 2. Introducción a los monitores en C++11.
-//
-// archivo: prodcons_1.cpp
-// Ejemplo de un monitor en C++11 con semántica SC, para el problema
-// del productor/consumidor, con un único productor y un único consumidor.
-// Opcion LIFO (stack)
-//
-// Historial:
-// Creado en Julio de 2017
-// -----------------------------------------------------------------------------
 
 
 #include <iostream>
@@ -107,7 +98,7 @@ void test_contadores()
 // *****************************************************************************
 // clase para monitor buffer, version LIFO, semántica SC, un prod. y un cons.
 
-class ProdCons1SC
+class ProdCons2SC
 {
  private:
  static const int           // constantes:
@@ -124,13 +115,13 @@ class ProdCons1SC
    libres ;                 //  cola donde espera el productor  (n<num_celdas_total)
 
  public:                    // constructor y métodos públicos
-   ProdCons1SC(  ) ;           // constructor
+   ProdCons2SC(  ) ;           // constructor
    int  leer();                // extraer un valor (sentencia L) (consumidor)
    void escribir( int valor ); // insertar un valor (sentencia E) (productor)
 } ;
 // -----------------------------------------------------------------------------
 
-ProdCons1SC::ProdCons1SC(  )
+ProdCons2SC::ProdCons2SC(  )
 {
    primera_libre = 0 ;
    primera_ocupada = 0;
@@ -139,7 +130,7 @@ ProdCons1SC::ProdCons1SC(  )
 // -----------------------------------------------------------------------------
 // función llamada por el consumidor para extraer un dato
 
-int ProdCons1SC::leer(  )
+int ProdCons2SC::leer(  )
 {
    // ganar la exclusión mutua del monitor con una guarda
    unique_lock<mutex> guarda( cerrojo_monitor );
@@ -164,7 +155,7 @@ int ProdCons1SC::leer(  )
 }
 // -----------------------------------------------------------------------------
 
-void ProdCons1SC::escribir( int valor )
+void ProdCons2SC::escribir( int valor )
 {
    // ganar la exclusión mutua del monitor con una guarda
    unique_lock<mutex> guarda( cerrojo_monitor );
@@ -188,7 +179,7 @@ void ProdCons1SC::escribir( int valor )
 // *****************************************************************************
 // funciones de hebras
 
-void funcion_hebra_productora( ProdCons1SC * monitor, int id)
+void funcion_hebra_productora( ProdCons2SC * monitor, int id)
 {
    int p = num_items/num_productores ;
    for( unsigned i =  0; i < p ; i++ )
@@ -199,7 +190,7 @@ void funcion_hebra_productora( ProdCons1SC * monitor, int id)
 }
 // -----------------------------------------------------------------------------
 
-void funcion_hebra_consumidora( ProdCons1SC * monitor )
+void funcion_hebra_consumidora( ProdCons2SC * monitor )
 {
    for( unsigned i = 0 ; i < num_items/num_consumidores ; i++ )
    {
@@ -212,11 +203,11 @@ void funcion_hebra_consumidora( ProdCons1SC * monitor )
 int main()
 {
    cout << "-------------------------------------------------------------------------------" << endl
-        << "Problema de los productores-consumidores (1 prod/cons, Monitor SC, buffer FIFO). " << endl
+        << "Problema de los productores-consumidores (varios prod/cons, Monitor SC, buffer FIFO). " << endl
         << "-------------------------------------------------------------------------------" << endl
         << flush ;
 
-   ProdCons1SC monitor ;
+   ProdCons2SC monitor ;
 
    thread hebras_productoras[num_productores], hebras_consumidoras[num_consumidores] ;
 
