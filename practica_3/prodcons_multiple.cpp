@@ -24,15 +24,18 @@ using namespace std::this_thread ;
 using namespace std::chrono ;
 
 const int
-   id_productor          = 0 ,
-   id_buffer             = 1 ,
-   id_consumidor         = 2 ,
-   num_procesos_esperado = 3 ,
-   num_items             = 20,
+   id_buffer             = 0 ,
+   num_items             = 100,
    tam_vector            = 10;
 
 const int
-   ;
+   etiq_consumidor = 0,
+   etiq_productor = 1;
+
+const int 
+   numero_productores = 5,
+   numero_consumidores = 10,
+   num_procesos_esperado = numero_consumidores + numero_productores + 1;
 
 //**********************************************************************
 // plantilla de función para generar un entero aleatorio uniformemente
@@ -61,13 +64,13 @@ int producir()
 
 void funcion_productor()
 {
-   for ( unsigned int i= 0 ; i < num_items ; i++ )
+   for ( unsigned int i= 0 ; i < num_items / numero_productores ; i++ )
    {
       // producir valor
       int valor_prod = producir();
       // enviar valor
       cout << "Productor va a enviar valor " << valor_prod << endl << flush;
-      MPI_Ssend( &valor_prod, 1, MPI_INT, id_buffer, 0, MPI_COMM_WORLD );
+      MPI_Ssend( &valor_prod, 1, MPI_INT, id_buffer, etiq_productor, MPI_COMM_WORLD );
    }
 }
 // ---------------------------------------------------------------------
@@ -86,9 +89,9 @@ void funcion_consumidor()
                valor_rec = 1 ;
    MPI_Status  estado ;
 
-   for( unsigned int i=0 ; i < num_items; i++ )
+   for( unsigned int i=0 ; i < num_items / numero_consumidores; i++ )
    {
-      MPI_Ssend( &peticion,  1, MPI_INT, id_buffer, 0, MPI_COMM_WORLD);
+      MPI_Ssend( &peticion,  1, MPI_INT, id_buffer, etiq_consumidor, MPI_COMM_WORLD);
       MPI_Recv ( &valor_rec, 1, MPI_INT, id_buffer, 0, MPI_COMM_WORLD,&estado );
       cout << "Consumidor ha recibido valor " << valor_rec << endl << flush ;
       consumir( valor_rec );
@@ -103,7 +106,7 @@ void funcion_buffer()
               primera_libre       = 0, // índice de primera celda libre
               primera_ocupada     = 0, // índice de primera celda ocupada
               num_celdas_ocupadas = 0, // número de celdas ocupadas
-              id_emisor_aceptable ;    // identificador de emisor aceptable
+              tag_aceptable ;    // identificador de emisor aceptable
    MPI_Status estado ;                 // metadatos del mensaje recibido
 
    for( unsigned int i=0 ; i < num_items*2 ; i++ )
@@ -111,33 +114,33 @@ void funcion_buffer()
       // 1. determinar si puede enviar solo prod., solo cons, o todos
 
       if ( num_celdas_ocupadas == 0 )               // si buffer vacío
-         id_emisor_aceptable = id_productor ;       // $~~~$ solo prod.
+         tag_aceptable = etiq_productor ;       // $~~~$ solo prod.
       else if ( num_celdas_ocupadas == tam_vector ) // si buffer lleno
-         id_emisor_aceptable = id_consumidor ;      // $~~~$ solo cons.
+         tag_aceptable = etiq_consumidor ;      // $~~~$ solo cons.
       else                                          // si no vacío ni lleno
-         id_emisor_aceptable = MPI_ANY_SOURCE ;     // $~~~$ cualquiera
+         tag_aceptable = MPI_ANY_TAG ;     // $~~~$ cualquiera
 
       // 2. recibir un mensaje del emisor o emisores aceptables
 
-      MPI_Recv( &valor, 1, MPI_INT, id_emisor_aceptable, 0, MPI_COMM_WORLD, &estado );
+      MPI_Recv( &valor, 1, MPI_INT, MPI_ANY_SOURCE, tag_aceptable, MPI_COMM_WORLD, &estado );
 
       // 3. procesar el mensaje recibido
 
-      switch( estado.MPI_SOURCE ) // leer emisor del mensaje en metadatos
+      switch( estado.MPI_TAG ) // leer emisor del mensaje en metadatos
       {
-         case id_productor: // si ha sido el productor: insertar en buffer
+         case etiq_productor: // si ha sido el productor: insertar en buffer
             buffer[primera_libre] = valor ;
             primera_libre = (primera_libre+1) % tam_vector ;
             num_celdas_ocupadas++ ;
             cout << "Buffer ha recibido valor " << valor << endl ;
             break;
 
-         case id_consumidor: // si ha sido el consumidor: extraer y enviarle
+         case etiq_consumidor: // si ha sido el consumidor: extraer y enviarle
             valor = buffer[primera_ocupada] ;
             primera_ocupada = (primera_ocupada+1) % tam_vector ;
             num_celdas_ocupadas-- ;
             cout << "Buffer va a enviar valor " << valor << endl ;
-            MPI_Ssend( &valor, 1, MPI_INT, id_consumidor, 0, MPI_COMM_WORLD);
+            MPI_Ssend( &valor, 1, MPI_INT, estado.MPI_SOURCE, 0, MPI_COMM_WORLD);
             break;
       }
    }
@@ -157,7 +160,7 @@ int main( int argc, char *argv[] )
    if ( num_procesos_esperado == num_procesos_actual )
    {
       // ejecutar la operación apropiada a 'id_propio'
-      if ( id_propio == id_productor )
+      if ( 1 <= id_propio && id_propio <= numero_productores )
          funcion_productor();
       else if ( id_propio == id_buffer )
          funcion_buffer();
