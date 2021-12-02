@@ -73,7 +73,6 @@ void funcion_gasolinera()
         // Hacemos una iteracion para cada tipo
         //Coches de gasolina
         // Primero vemos si algun coche quiere salir
-        cout << "Comprobando si alguien quiere salir" << endl;
         MPI_Iprobe(MPI_ANY_SOURCE, etiq_terminar_gasolina, MPI_COMM_WORLD, &esperando, &estado);
         if (esperando)
         {
@@ -83,19 +82,17 @@ void funcion_gasolinera()
         }
         if (surtidores_gasolina_libres)
         {
-        cout << "Comprobando si alguien quiere entrar" << endl;
             // Vemos si alguien quiere entrar
             MPI_Iprobe(MPI_ANY_SOURCE, etiq_empezar_a_repostar_gasolina, MPI_COMM_WORLD, &esperando, &estado);
             if (esperando)
             {
                 // Hay al menos uno, lo liberamos
-                MPI_Recv(&dato, 1, MPI_INT, MPI_ANY_SOURCE, etiq_terminar_gasolina, MPI_COMM_WORLD, &estado);
+                MPI_Recv(&dato, 1, MPI_INT, MPI_ANY_SOURCE, etiq_empezar_a_repostar_gasolina, MPI_COMM_WORLD, &estado);
                 surtidores_gasolina_libres--;
             }
         }
 
         // Coches gasoil
-        cout << "Comprobando si alguien quiere salir" << endl;
         MPI_Iprobe(MPI_ANY_SOURCE, etiq_terminar_gasoil, MPI_COMM_WORLD, &esperando, &estado);
         if (esperando)
         {
@@ -106,16 +103,16 @@ void funcion_gasolinera()
 
         if (surtidores_gasoil_libres)
         {
-        cout << "Comprobando si alguien quiere entrar" << endl;
             // Vemos si alguien quiere entrar
             MPI_Iprobe(MPI_ANY_SOURCE, etiq_empezar_a_repostar_gasoil, MPI_COMM_WORLD, &esperando, &estado);
             if (esperando)
             {
                 // Hay al menos uno, lo liberamos
-                MPI_Recv(&dato, 1, MPI_INT, MPI_ANY_SOURCE, etiq_terminar_gasoil, MPI_COMM_WORLD, &estado);
+                MPI_Recv(&dato, 1, MPI_INT, MPI_ANY_SOURCE, etiq_empezar_a_repostar_gasoil, MPI_COMM_WORLD, &estado);
                 surtidores_gasoil_libres--;
             }
         }
+        this_thread::sleep_for(milliseconds(20));
     }
 }
 

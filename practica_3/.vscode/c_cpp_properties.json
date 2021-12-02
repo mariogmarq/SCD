@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/usr/lib/x86_64-linux-gnu/openmpi/lib",
-                "/usr/lib/x86_64-linux-gnu/openmpi/include"
+                "/usr/lib/x86_64-linux-gnu/openmpi/include",
+                "/usr/include/openmpi-x86_64"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",
