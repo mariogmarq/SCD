@@ -25,7 +25,8 @@ using namespace std::chrono ;
 const int
    num_filosofos = 5 ,              // número de filósofos 
    num_filo_ten  = 2*num_filosofos, // número de filósofos y tenedores 
-   num_procesos  = num_filo_ten + 1;   // número de procesos total (por ahora solo hay filo y ten)
+   num_procesos  = num_filo_ten + 1,   // número de procesos total
+   id_camarero = num_procesos - 1;
 
 const int
    etiq_sentarse = 0,
@@ -55,7 +56,7 @@ void funcion_filosofos( int id )
   while ( true )
   {
     cout <<"Filósofo " <<id <<" quiere sentarse" <<endl;
-     MPI_Ssend(&valor, 1, MPI_INT, num_procesos -1, etiq_sentarse, MPI_COMM_WORLD);
+     MPI_Ssend(&valor, 1, MPI_INT, id_camarero, etiq_sentarse, MPI_COMM_WORLD);
     cout <<"Filósofo " <<id <<" se sienta" <<endl;
 
     cout <<"Filósofo " <<id <<" solicita ten. der." <<id_ten_der <<endl;
@@ -77,7 +78,7 @@ void funcion_filosofos( int id )
     // ... soltar el tenedor derecho (completar)
     MPI_Ssend(&valor, 1, MPI_INT, id_ten_der, 0, MPI_COMM_WORLD);
 
-   MPI_Ssend(&valor, 1, MPI_INT, num_procesos -1, etiq_levantarse, MPI_COMM_WORLD);
+   MPI_Ssend(&valor, 1, MPI_INT, id_camarero, etiq_levantarse, MPI_COMM_WORLD);
     cout <<"Filósofo " <<id <<" se levanta" <<endl;
 
     cout << "Filosofo " << id << " comienza a pensar" << endl;
@@ -142,7 +143,7 @@ int main( int argc, char** argv )
    if ( num_procesos == num_procesos_actual )
    {
       // ejecutar la función correspondiente a 'id_propio'
-      if(id_propio == num_procesos - 1)
+      if(id_propio == id_camarero)
          funcion_camarero();
       else if ( id_propio % 2 == 0 )          // si es par
          funcion_filosofos( id_propio ); //   es un filósofo
